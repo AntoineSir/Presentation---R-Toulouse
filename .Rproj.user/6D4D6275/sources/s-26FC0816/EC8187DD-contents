@@ -1,8 +1,0 @@
-microbenchmark::microbenchmark(times = 5, un = {
-  flights %>% group_by(time_hour, origin) %>% 
-    summarise(arr_delay = mean(arr_delay),
-              dep_delay = mean(dep_delay)) %>% 
-    inner_join(weather, by = c("time_hour", "origin"))}, 
-  deux = {flights %>% group_by(as.factor(time_hour), as.factor(origin)) %>% 
-                                 summarise(arr_delay = mean(arr_delay),dep_delay = mean(dep_delay)) %>% 
-                                 inner_join(weather, by = c("time_hour", "origin"))})

@@ -19,7 +19,8 @@ output:
 ```{r setup, include=FALSE}
 library(knitr)
 knitr::opts_chunk$set(echo = FALSE)
-
+opts_chunk$set(size = 'footnotesize')
+options(width=60)
 ```
 
 
@@ -107,15 +108,15 @@ print(head(output_tibble, 5))
 - Plus lisible, plus rapide que base R
 
 ## Syntaxe data.table (1)
-- l'opérateur `[` appliqué au data.table change de signification et devient : 
+- l'opérateur `[` appliqué au data.table change de signification et devient :   
 
 ```
 DT[i, j, by]
 ```
-- `i` permet de sélectionner des lignes de `DT`
-- `j` permet de créer des variables ou d'en sélectionner
-- `by` permet de regrouper les traitement selon les modalités d'une variable définie
-- L'usage de `[` permet de chaîner les opérations : 
+- `i` permet de sélectionner des lignes de `DT`  
+- `j` permet de créer des variables ou d'en sélectionner  
+- `by` permet de regrouper les traitement selon les modalités d'une variable définie  
+- L'usage de `[` permet de chaîner les opérations :   
 
 ## Syntaxe data.table (2) {.flexbox .smaller .vcenter}
 ```{r echo=T, results='hide', message=FALSE, warning=FALSE, paged.print=FALSE}
@@ -139,8 +140,11 @@ print(head(output_dt, 5))
 
 ## Comparaisons avec base R {.flexbox .vcenter}
 `dplyr` et `data.table` présentent un certain nombre d'avantages par rapport à l'usage de base R exclusivement :  
-- + lisibles et - verbeux, grâce notamment au chaînage   
+
+- Plus lisibles et moins verbeux, grâce notamment au chaînage  
+
 - Pensés pour l'analyse de données  
+
 - Instruction optimisées et bien plus rapides que base R  
 
 # Comparaison des vitesses d'exécution
@@ -166,10 +170,14 @@ weather_dt <- as.data.table(weather)
 ## Étude de cas avec `nycflights13` - Base R {.flexbox .smaller .vcenter}
 ```{r echo=T, results='hide', message=FALSE, warning=FALSE, paged.print=FALSE}
 flights_time_hour <- aggregate.data.frame(
-  list(arr_delay = flights$arr_delay, dep_delay = flights$dep_delay), 
-  list(time_hour = flights$time_hour, origin = flights$origin), 
+  list(arr_delay = flights$arr_delay, 
+       dep_delay = flights$dep_delay), 
+  list(time_hour = flights$time_hour, 
+       origin = flights$origin), 
   mean)
-merge_base <- merge(weather, flights_time_hour, by = c("time_hour", "origin"), sort = FALSE)
+merge_base <- merge(weather, flights_time_hour, 
+                    by = c("time_hour", "origin"), 
+                    sort = FALSE)
 ```
 
 ## Étude de cas avec `nycflights13` - dplyr {.flexbox .smaller .vcenter}
@@ -177,7 +185,8 @@ merge_base <- merge(weather, flights_time_hour, by = c("time_hour", "origin"), s
 flights %>% group_by(time_hour, origin) %>% 
   summarise(arr_delay = mean(arr_delay),
             dep_delay = mean(dep_delay)) %>% 
-  inner_join(weather, by = c("time_hour", "origin")) -> merge_dplyr 
+  inner_join(weather, by = c("time_hour", "origin")
+             ) -> merge_dplyr 
 ```
 
 ## Étude de cas avec `nycflights13` - dplyr {.flexbox .smaller .vcenter}
@@ -193,7 +202,8 @@ merge_DT <- merge(
 ## Comparaisons des vitesses de ces instructions {.flexbox .smaller .vcenter}
 Le package `microbenchmark` nous permet de comparer la vitesse de ces instructions : 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+```{r echo=FALSE, fig.height=5, fig.width=5, message=FALSE, warning=FALSE, paged.print=FALSE}
 microbenchmark::microbenchmark(
   times = 10L, 
   "base R" = {
@@ -215,8 +225,10 @@ microbenchmark::microbenchmark(
                  by = list(time_hour, origin)], 
       weather_dt, 
       by = c("time_hour", "origin"))
-  })
+  }, unit = "ms")
+
 ```
+
 
 
 
