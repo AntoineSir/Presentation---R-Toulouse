@@ -1,0 +1,8 @@
+"0","library(nycflights13)"
+"0","flights$time_hour <- as.factor(flights$time_hour)"
+"0","flights$origin <- as.factor(flights$origin)"
+"0","weather$time_hour <- as.factor(weather$time_hour)"
+"0","weather$origin <- as.factor(weather$origin)"
+"0","# data.table pour tests avec data.table"
+"0","flights_dt <- as.data.table(flights)"
+"0","weather_dt <- as.data.table(weather)"

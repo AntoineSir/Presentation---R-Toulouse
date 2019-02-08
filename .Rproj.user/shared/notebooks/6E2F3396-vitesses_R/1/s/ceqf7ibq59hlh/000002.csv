@@ -1,0 +1,8 @@
+"0","library(data.table) "
+"0","# on convertit notre data frame "
+"0","# précédemment créé en data.table"
+"0","dt <- as.data.table(df)"
+"0","# on y applique les même instructions"
+"0","dt[, var := rnorm(100)"
+"0","   ][, list(var_mean = mean(var)), "
+"0","   by = idgpe] -> output_dt"

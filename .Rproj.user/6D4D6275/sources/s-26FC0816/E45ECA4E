@@ -1,0 +1,24 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1549622731417.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1001051399",
+    "id" : "E45ECA4E",
+    "lastKnownWriteTime" : 1549644548,
+    "last_content_update" : 1549644548692,
+    "path" : "~/Présentation R Toulouse/vitesses_R.Rmd",
+    "project_path" : "vitesses_R.Rmd",
+    "properties" : {
+        "cursorPosition" : "197,12",
+        "last_setup_crc32" : "26FC0816d41cecec",
+        "scrollLine" : "194",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
