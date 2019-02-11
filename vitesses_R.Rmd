@@ -1,7 +1,8 @@
 ---
-title: 'Vitesses d’exécution dans R : comparaisons de base R, dplyr et data.table'
+title: "Vitesses d'exécution dans R : comparaisons de base R, dplyr et data.table"
 author: "Antoine Sireyjol"
 date: "14 février 2019"
+lang: fr
 output:
   beamer_presentation: 
     colortheme: beaver
@@ -22,7 +23,11 @@ knitr::opts_chunk$set(echo = FALSE)
 opts_chunk$set(size = 'footnotesize')
 options(width=60)
 ```
-
+## Je me présente
+- Antoine Sireyjol, statisticien indépendant
+- Ancien salarié de la Drees : le service statistique du Ministère des Solidarités et de la santé
+- Travail depuis Toulouse sur la migration de leurs outils de SAS vers R (ou Python)
+- Tests de comparaison d'instructions entre R et SAS mais aussi entre les différentes options de R 
 
 ## Plan de la présentation {.flexbox .vcenter}
 
@@ -115,7 +120,7 @@ DT[i, j, by]
 ```
 - `i` permet de sélectionner des lignes de `DT`  
 - `j` permet de créer des variables ou d'en sélectionner  
-- `by` permet de regrouper les traitement selon les modalités d'une variable définie  
+- `by` permet de regrouper les traitements selon les modalités d'une variable définie  
 - L'usage de `[` permet de chaîner les opérations :   
 
 ## Syntaxe data.table (2) {.flexbox .smaller .vcenter}
@@ -145,7 +150,7 @@ print(head(output_dt, 5))
 
 - Pensés pour l'analyse de données  
 
-- Instruction optimisées et bien plus rapides que base R  
+- Instructions optimisées et bien plus rapides que base R  
 
 # Comparaison des vitesses d'exécution
 
@@ -189,7 +194,7 @@ flights %>% group_by(time_hour, origin) %>%
              ) -> merge_dplyr 
 ```
 
-## Étude de cas avec `nycflights13` - dplyr {.flexbox .smaller .vcenter}
+## Étude de cas avec `nycflights13` - data.table {.flexbox .smaller .vcenter}
 ```{r echo=T, results='hide', message=FALSE, warning=FALSE, paged.print=FALSE}
 merge_DT <- merge(
   flights_dt[, list(arr_delay = mean(arr_delay), 
@@ -229,13 +234,217 @@ microbenchmark::microbenchmark(
 
 ```
 
+## Comparaisons du groupage en fonction du nombre d'observations {.flexbox .vcenter}
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(data.table)
+library(microbenchmark)
+test_group_by <- function(nbrow, nbgpe){
+  test <- as_tibble(data.frame(x = rnorm(nbrow), y = sample(floor(nbgpe), replace = TRUE)))
+  testDT <- as.data.table(test)
+  return(autoplot(
+    microbenchmark::microbenchmark(times = 10, unit="ms", 
+                                   dplyr = test %>% group_by(y) %>% summarise(x = mean(x)),
+                                   data.table = testDT[, .(x = mean(x)), by = .(y = y)],
+                                   "Base R" = {
+                                     tap <- tapply(test$x, test$y, mean)
+                                     data.frame(x = tap, y = names(tap))}
+                                   ),
+    log = FALSE)
+    + ggtitle(paste0(nbrow, " lignes pour ", nbgpe, " groupes ")) + expand_limits(y = 0))
+}
+```
 
+- Avantage net de dplyr et data.table sur base R, et avantage à data.table sur cet exemple
+- Qu'en est-il quand on fait varier le nombre d'observations?
+- Comparaisons des vitesses d'agrégation en faisant varier le nombre d'observations et le nombre de groupes
+- Les instructions testées :  
 
+## Comparaisons du groupage en fonction du nombre d'observations {.flexbox .vcenter}
+```
+# Pour dplyr
+datatib %>% group_by(y) 
+%>% summarise(x = mean(x))
 
+# Pour data.table
+dataDT[, .(x = mean(x)), 
+       by = .(y = y)]
 
+# Pour base R
+tap <- tapply(test$x, test$y, mean)
+data.frame(x = tap, y = names(tap))
 
+```
+## Résultats en fonction des nombres de lignes et de groupes {.flexbox .vcenter}
 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+x <- 1000
+y <- 1
+for (i in seq(1, 3)){
+  x <- x * 10
+  y <- y * 10
+  assign(paste0("plot", i, sep = ""), test_group_by(x, y))
+}
+x <- 1000
+y <- 500
+for (i in seq(4, 6)){
+  x <- x * 10
+  y <- y * 10
+  assign(paste0("plot", i, sep = ""), test_group_by(x, y))
+}
 
+library(gridExtra)
+grid.arrange(plot1, plot4, plot2, plot5, plot3, plot6, ncol = 2, heights = c(3, 3, 3))
+
+```
+
+# Quelques astuces d'optimisation
+
+## Utiliser les fonctions \*apply plutôt que les boucles  
+
+- Important de vectoriser ses instructions  
+- *apply permet d'appliquer une fonction à un ensemble d'éléments  
+- `apply(matrice, i, f())` applique f à l'ensemble des lignes (i = 1) ou des colonnes (i = 2) de la matrice  
+- `lapply(X, f())` applique f à chacun des éléments du vecteur ou de la liste X  
+- Comparaisons avec une boucle :  
+
+## lapply et boucle {.flexbox .vcenter}
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# On crée une matrice de 10 000 lignes et 25 colonnes
+data <- matrix(1:250000, ncol = 25)
+
+# On veut le résultat de la somme de chaque ligne
+# Avec une boucle
+boucle_results <- c()
+for (i in 1:nrow(data)){
+  boucle_results <- append(boucle_results, sum(data[i, ]))
+  }
+
+# Avec apply
+apply_results <- apply(data, 1, sum)
+
+identical(apply_results, boucle_results)
+```
+
+## lapply et boucle : microbenchmark {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+microbenchmark::microbenchmark(
+  times = 20L, 
+  "boucle" = {
+    boucle_results <- c()
+    for (i in 1:nrow(data)){
+      boucle_results <- append(boucle_results, sum(data[i, ]))
+    }
+  }, 
+  "apply" = apply_results <- apply(data, 1, sum))
+```
+
+## Éviter ifelse {.flexbox .vcenter}
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Fonction ifelse
+flights$gros_retard <- ifelse(flights$arr_delay > 30, 
+                              "oui", "non")
+
+# Sans ifelse
+flights$gros_retardbis <- "non"
+flights$gros_retardbis[flights$arr_delay > 30] <-  "oui"
+
+```
+
+## Éviter ifelse - microbenchmark {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+microbenchmark::microbenchmark(
+  times = 100L,
+  "ifelse" = {
+    flights$gros_retard <- ifelse(flights$arr_delay > 30, 
+                                  "oui", "non")
+    },
+  "sans ifelse" = {
+    flights$gros_retardbis <- "non"
+    flights$gros_retardbis[flights$arr_delay > 30] <-  "oui"
+  }
+  )
+```
+## Dplyr : pas de création de variable à l'intérieur de summarise() {.flexbox .vcenter}
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Avec mutate
+flights %>% mutate(propor_delay = arr_delay / air_time) %>% 
+group_by(time_hour) %>% 
+summarise(propor_delay = mean(propor_delay)
+          ) -> output_dyp
+
+# Sans mutate
+flights %>% group_by(time_hour) %>% 
+summarise(propor_delay = mean(arr_delay / air_time)
+          ) -> output_dyp2
+
+```
+
+## Dplyr : pas de création de variable à l'intérieur de summarise() - microbenchmark {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+microbenchmark::microbenchmark(times=10L, dplyr_mutate = {
+flights %>% mutate(propor_delay = arr_delay / air_time) %>% 
+group_by(time_hour) %>% 
+summarise(propor_delay = mean(propor_delay)) 
+}, dplyr_sans_mutate = {
+flights %>% group_by(time_hour) %>% 
+summarise(propor_delay = mean(arr_delay / air_time))
+})
+```
+
+## Dplyr : group_by par factor plutôt que caractère {.flexbox .vcenter}
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+flights$originfac <- as.factor(flights$origin)
+
+# group by character
+flights %>% group_by(origin) %>% 
+  summarize(mean_delay = mean(arr_delay, na.rm = TRUE)
+            ) -> out_char
+
+# group by factor
+flights %>% group_by(originfac) %>% 
+  summarize(mean_delay = mean(arr_delay, na.rm = TRUE)
+            ) -> out_fact
+
+```
+
+## Dplyr : group_by par factor plutôt que caractère - microbenchmark {.flexbox .vcenter}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+flights <- nycflights13::flights
+flights$originfac <- as.factor(flights$origin)
+microbenchmark::microbenchmark(
+  times = 20L, 
+ "group by character" = {
+   flights %>% group_by(origin) %>% 
+     summarize(mean_delay = mean(arr_delay, na.rm = TRUE))
+   },
+ "group by factor" = {
+   flights %>% group_by(originfac) %>% 
+     summarize(mean_delay = mean(arr_delay, na.rm = TRUE))
+ })
+```
+
+# Conclusions sur les comparaisons
+
+## Conclusions  
+- Dplyr et data.table : + rapides et + faciles d'utilisation que base R pour l'analyse de données
+- Choix entre dplyr et data.table dépend de différents facteurs :  
+  * Type de base de données en entrée
+  * Profil des personnes qui codent
+  * Importance accordée à la vitesse d'exécution
+- Intéressant de faire des tests sur ses scripts pour voir comment ils peuvent être optimisés
+
+# Références
+
+## Références 
+
+* [Formation R perfectionnement](https://teaching.slmc.fr/perf/index.html), M. Chevalier
+* [Introduction à R et au tidyverse](https://juba.github.io/tidyverse/01-presentation.html), J.Barnier
+* [Manipulations avancées avec data.table](http://larmarange.github.io/analyse-R/manipulations-avancees-avec-data-table.html), J. Larmarange
+* Pour des benchmarks data.table, dplyr et python : [Benchmarks : Grouping](https://github.com/Rdatatable/data.table/wiki/Benchmarks-%3A-Grouping)
+* https://antoinesir.rbind.io
 
 
 
