@@ -39,14 +39,14 @@ options(width=60)
 2) Comparaison des vitesses d'exécution   
   2.1.  Étude de cas avec le package `nycflights13`  
   2.2.  Vitesses d'instruction en fonction de la taille de l'échantillon  
+  
+3) Conclusions sur les comparaisons
 
-3) Astuces d'optimisation d'un script R  
+4) Astuces d'optimisation d'un script R  
   3.1.  Utilisation de *apply  
   3.2.  Éviter `ifelse`  
   3.3.  Définition d'une variable à l'intérieur de `summarise`  
   3.4.  `group_by` de dplyr  
-
-4) Conclusions sur les comparaisons
 
 5) Références
 
@@ -297,6 +297,15 @@ library(gridExtra)
 grid.arrange(plot1, plot4, plot2, plot5, plot3, plot6, ncol = 2, heights = c(3, 3, 3))
 
 ```
+# Conclusions sur les comparaisons
+
+## Conclusions  
+- Dplyr et data.table : + rapides et + faciles d'utilisation que base R pour l'analyse de données
+- Choix entre dplyr et data.table dépend de différents facteurs :  
+  . Type de base de données en entrée
+  . Profil des personnes qui codent
+  . Importance accordée à la vitesse d'exécution
+- Intéressant de faire des tests sur ses scripts pour voir comment ils peuvent être optimisés
 
 # Quelques astuces d'optimisation
 
@@ -426,23 +435,14 @@ microbenchmark::microbenchmark(
  })
 ```
 
-# Conclusions sur les comparaisons
-
-## Conclusions  
-- Dplyr et data.table : + rapides et + faciles d'utilisation que base R pour l'analyse de données
-- Choix entre dplyr et data.table dépend de différents facteurs :  
-  * Type de base de données en entrée
-  * Profil des personnes qui codent
-  * Importance accordée à la vitesse d'exécution
-- Intéressant de faire des tests sur ses scripts pour voir comment ils peuvent être optimisés
-
 # Références
 
 ## Références 
 
 * [Formation R perfectionnement](https://teaching.slmc.fr/perf/index.html), M. Chevalier
 * [Introduction à R et au tidyverse](https://juba.github.io/tidyverse/01-presentation.html), J.Barnier
-* [Manipulations avancées avec data.table](http://larmarange.github.io/analyse-R/manipulations-avancees-avec-data-table.html), J. Larmarange
+* [Manipulations avancées avec data.table](http://larmarange.github.io/analyse-R/manipulations-avancees-avec-data-table.html), J. Larmarange  
+* [Discussion stackoverflow dplyr vs data.table](https://stackoverflow.com/questions/21435339/data-table-vs-dplyr-can-one-do-something-well-the-other-cant-or-does-poorly)
 * Pour des benchmarks data.table, dplyr et python : [Benchmarks : Grouping](https://github.com/Rdatatable/data.table/wiki/Benchmarks-%3A-Grouping)
 * https://antoinesir.rbind.io
 
